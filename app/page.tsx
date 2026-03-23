@@ -56,11 +56,6 @@ export default function Page() {
             </p>
           </div>
         </div>
-
-        <p className="text-center text-xs text-muted-foreground">
-          Export a chat from WhatsApp &rarr; More &rarr; Export chat &rarr;
-          Attach media &rarr; Upload the .zip here.
-        </p>
       </div>
     </div>
   )
