@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils"
 import { MediaPreview } from "@/components/media-preview"
-import { type Message } from "@/types/chat"
+import { ParticipantAvatar } from "@/components/participant-avatar"
+import { type Message, type Participant } from "@/types/chat"
 
 // Simple URL detection for text messages
 const URL_RE = /(https?:\/\/[^\s<]+)/g
@@ -52,23 +53,31 @@ function MessageBubble({
   message,
   isOwn,
   showSender,
-  senderColor,
+  participant,
 }: {
   message: Message
   isOwn: boolean
   showSender: boolean
-  senderColor: string
+  participant?: Participant
 }) {
   if (message.type === "system") {
     return <SystemMessage message={message} />
   }
 
+  const senderColor = participant?.color ?? "oklch(0.5 0 0)"
+
   if (message.isDeleted) {
     return (
       <div
         data-slot="message-bubble"
-        className={cn("flex", isOwn ? "justify-end" : "justify-start")}
+        className={cn(
+          "flex items-end gap-2",
+          isOwn ? "flex-row-reverse" : "flex-row"
+        )}
       >
+        {showSender && !isOwn && participant && (
+          <ParticipantAvatar participant={participant} size="sm" />
+        )}
         <div
           className={cn(
             "max-w-[75%] rounded-lg px-3 py-2 text-sm text-muted-foreground italic",
@@ -86,8 +95,14 @@ function MessageBubble({
   return (
     <div
       data-slot="message-bubble"
-      className={cn("flex", isOwn ? "justify-end" : "justify-start")}
+      className={cn(
+        "flex items-end gap-2",
+        isOwn ? "flex-row-reverse" : "flex-row"
+      )}
     >
+      {showSender && !isOwn && participant && (
+        <ParticipantAvatar participant={participant} size="sm" />
+      )}
       <div
         className={cn(
           "max-w-[75%] rounded-lg px-3 py-2",

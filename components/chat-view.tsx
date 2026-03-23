@@ -2,32 +2,17 @@
 
 import * as React from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { Search, X, Users, MessageSquare } from "lucide-react"
+import { Search, X, MessageSquare } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar"
 import { MessageBubble } from "@/components/message-bubble"
 import { DateSeparator } from "@/components/date-separator"
 import { MediaGallery } from "@/components/media-gallery"
+import { ParticipantAvatar } from "@/components/participant-avatar"
 import { type ChatData, type Message } from "@/types/chat"
-
-// Assign deterministic colors to participants
-const SENDER_COLORS = [
-  "oklch(0.65 0.2 25)",
-  "oklch(0.55 0.2 260)",
-  "oklch(0.6 0.2 150)",
-  "oklch(0.6 0.15 330)",
-  "oklch(0.55 0.2 50)",
-  "oklch(0.5 0.2 200)",
-  "oklch(0.6 0.2 100)",
-  "oklch(0.55 0.2 290)",
-]
-
-function getSenderColor(sender: string, participants: string[]): string {
-  const idx = participants.indexOf(sender)
-  return SENDER_COLORS[idx % SENDER_COLORS.length]
-}
 
 type RowItem =
   | { kind: "date"; date: Date; key: string }
@@ -133,9 +118,25 @@ function ChatView({ chatData }: { chatData: ChatData }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-full bg-primary/10">
-            <Users className="size-4 text-primary" />
-          </div>
+          <AvatarGroup>
+            {chatData.participants.slice(0, 3).map((name) => {
+              const participant = chatData.participantMap.get(name)
+              if (!participant) return null
+              return (
+                <ParticipantAvatar
+                  key={name}
+                  participant={participant}
+                  size="sm"
+                  editable
+                />
+              )
+            })}
+            {chatData.participants.length > 3 && (
+              <AvatarGroupCount>
+                +{chatData.participants.length - 3}
+              </AvatarGroupCount>
+            )}
+          </AvatarGroup>
           <div>
             <h2 className="text-sm font-semibold">
               {chatData.participants.length <= 3
@@ -221,9 +222,8 @@ function ChatView({ chatData }: { chatData: ChatData }) {
                     message={row.message}
                     isOwn={row.message.sender === ownParticipant}
                     showSender={showSenderNames}
-                    senderColor={getSenderColor(
-                      row.message.sender,
-                      chatData.participants
+                    participant={chatData.participantMap.get(
+                      row.message.sender
                     )}
                   />
                 )}

@@ -19,8 +19,15 @@ export type Message = {
   isEdited: boolean
 }
 
+export type Participant = {
+  name: string
+  avatarUrl?: string
+  color: string
+}
+
 export type ChatData = {
   participants: string[]
+  participantMap: Map<string, Participant>
   messages: Message[]
   mediaMap: Map<string, string>
 }

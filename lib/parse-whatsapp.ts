@@ -1,4 +1,5 @@
 import { type ChatData, type Message, type MessageType } from "@/types/chat"
+import { buildParticipantMap } from "@/lib/participants"
 
 // Bracketed format: [DD/MM/YYYY, HH:MM:SS] Name: message
 // Dash format:      DD/MM/YYYY HH:MM - Name: message
@@ -463,8 +464,11 @@ export function parseWhatsApp(
     messages.push(currentMessage)
   }
 
+  const participants = [...participantSet]
+
   return {
-    participants: [...participantSet],
+    participants,
+    participantMap: buildParticipantMap(participants),
     messages,
     mediaMap,
   }
