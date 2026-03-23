@@ -12,6 +12,7 @@ import { MessageBubble } from "@/components/message-bubble"
 import { DateSeparator } from "@/components/date-separator"
 import { MediaGallery } from "@/components/media-gallery"
 import { ParticipantAvatar } from "@/components/participant-avatar"
+import { TimelineScrubber } from "@/components/timeline-scrubber"
 import { type ChatData, type Message } from "@/types/chat"
 
 type RowItem =
@@ -36,6 +37,32 @@ function buildRows(messages: Message[]): RowItem[] {
   }
 
   return rows
+}
+
+/** Walk backwards from a row index to find the date for that position. */
+function getDateForRow(rows: RowItem[], index: number): Date | null {
+  for (let i = index; i >= 0; i--) {
+    const row = rows[i]
+    if (row.kind === "date") return row.date
+  }
+  const row = rows[index]
+  if (row && row.kind === "message") return row.message.timestamp
+  return null
+}
+
+function StickyDateBadge({ dateLabel }: { dateLabel: string }) {
+  if (!dateLabel) return null
+
+  return (
+    <div
+      data-slot="sticky-date-badge"
+      className="pointer-events-none absolute top-0 right-0 left-0 z-40 flex justify-center pt-2"
+    >
+      <span className="rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-secondary-foreground shadow-sm ring-1 ring-border">
+        {dateLabel}
+      </span>
+    </div>
+  )
 }
 
 function ChatView({ chatData }: { chatData: ChatData }) {
@@ -112,6 +139,28 @@ function ChatView({ chatData }: { chatData: ChatData }) {
     overscan: 10,
     measureElement: (el) => el.getBoundingClientRect().height,
   })
+
+  // Find the first row actually visible in the viewport (not overscan).
+  // virtualItems includes overscan items above the viewport, so we need to
+  // find the first item whose start >= scrollOffset.
+  const virtualItems = virtualizer.getVirtualItems()
+  const scrollOffset = virtualizer.scrollOffset ?? 0
+  const firstVisibleItem = virtualItems.find(
+    (item) => item.start + item.size > scrollOffset
+  )
+  const visibleDate =
+    firstVisibleItem && rows.length > 0
+      ? getDateForRow(rows, firstVisibleItem.index)
+      : null
+
+  const stickyDateLabel = visibleDate
+    ? visibleDate.toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : ""
 
   return (
     <div className="flex h-full flex-col">
@@ -196,40 +245,57 @@ function ChatView({ chatData }: { chatData: ChatData }) {
         </div>
       </div>
 
-      {/* Virtualized message list */}
-      <div ref={parentRef} className="flex-1 overflow-auto">
-        <div
-          className="relative mx-auto w-full max-w-3xl"
-          style={{ height: virtualizer.getTotalSize() }}
-        >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index]
+      {/* Virtualized message list with timeline scrubber */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="relative flex-1">
+          <StickyDateBadge dateLabel={stickyDateLabel} />
+          <div
+            ref={parentRef}
+            className="scrollbar-hidden absolute inset-0 overflow-auto"
+          >
+            <div
+              className="relative mx-auto w-full max-w-3xl"
+              style={{ height: virtualizer.getTotalSize() }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const row = rows[virtualRow.index]
 
-            return (
-              <div
-                key={row.key}
-                ref={virtualizer.measureElement}
-                data-index={virtualRow.index}
-                className="absolute top-0 left-0 w-full px-4 pb-1"
-                style={{
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                {row.kind === "date" ? (
-                  <DateSeparator date={row.date} />
-                ) : (
-                  <MessageBubble
-                    message={row.message}
-                    isOwn={row.message.sender === ownParticipant}
-                    showSender={showSenderNames}
-                    participant={chatData.participantMap.get(
-                      row.message.sender
+                return (
+                  <div
+                    key={row.key}
+                    ref={virtualizer.measureElement}
+                    data-index={virtualRow.index}
+                    className="absolute top-0 left-0 w-full px-4 pb-1"
+                    style={{
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {row.kind === "date" ? (
+                      <DateSeparator date={row.date} />
+                    ) : (
+                      <MessageBubble
+                        message={row.message}
+                        isOwn={row.message.sender === ownParticipant}
+                        showSender={showSenderNames}
+                        participant={chatData.participantMap.get(
+                          row.message.sender
+                        )}
+                      />
                     )}
-                  />
-                )}
-              </div>
-            )
-          })}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-l">
+          <TimelineScrubber
+            rows={rows}
+            virtualizer={virtualizer}
+            parentRef={parentRef}
+            visibleDate={visibleDate}
+          />
         </div>
       </div>
     </div>
