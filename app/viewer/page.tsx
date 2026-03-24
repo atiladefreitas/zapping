@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
+import { ThemeToggle } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 import { ChatView } from "@/components/chat-view"
 import { useChatStore } from "@/hooks/use-chat-store"
@@ -34,6 +35,9 @@ export default function ViewerPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <span className="font-heading text-sm font-semibold">Zaping</span>
+        <div className="ml-auto">
+          <ThemeToggle />
+        </div>
       </div>
       <div className="min-h-0 flex-1">
         <ChatView chatData={chatData} />

@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { MessageSquareText, Shield, Zap } from "lucide-react"
 
+import { ThemeToggle } from "@/components/theme-provider"
 import { UploadZone } from "@/components/upload-zone"
 
 export default function Page() {
@@ -11,6 +12,9 @@ export default function Page() {
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-lg space-y-8">
         {/* Header */}
         <div className="text-center">
