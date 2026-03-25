@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation"
 import { MessageSquareText, Shield, Zap } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-provider"
+import { LanguageSelector } from "@/components/language-selector"
 import { UploadZone } from "@/components/upload-zone"
+import { useI18n } from "@/lib/i18n"
 
 export default function Page() {
   const router = useRouter()
+  const { t } = useI18n()
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center p-6">
-      <div className="fixed top-4 right-4">
+      <div className="fixed top-4 right-4 flex items-center gap-1">
+        <LanguageSelector />
         <ThemeToggle />
       </div>
       <div className="w-full max-w-lg space-y-8">
@@ -22,8 +26,7 @@ export default function Page() {
             Zaping
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            View your exported WhatsApp conversations — entirely in your
-            browser.
+            {t("home.subtitle")}
           </p>
         </div>
 
@@ -36,27 +39,27 @@ export default function Page() {
             <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-muted">
               <Shield className="size-4 text-muted-foreground" />
             </div>
-            <p className="text-xs font-medium">100% Private</p>
+            <p className="text-xs font-medium">{t("home.private")}</p>
             <p className="text-xs text-muted-foreground">
-              Nothing leaves your device
+              {t("home.privateDesc")}
             </p>
           </div>
           <div className="space-y-1.5">
             <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-muted">
               <Zap className="size-4 text-muted-foreground" />
             </div>
-            <p className="text-xs font-medium">Instant</p>
+            <p className="text-xs font-medium">{t("home.instant")}</p>
             <p className="text-xs text-muted-foreground">
-              Parsed entirely in your browser
+              {t("home.instantDesc")}
             </p>
           </div>
           <div className="space-y-1.5">
             <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-muted">
               <MessageSquareText className="size-4 text-muted-foreground" />
             </div>
-            <p className="text-xs font-medium">Full Media</p>
+            <p className="text-xs font-medium">{t("home.fullMedia")}</p>
             <p className="text-xs text-muted-foreground">
-              Images, video, audio &amp; docs
+              {t("home.fullMediaDesc")}
             </p>
           </div>
         </div>

@@ -1,5 +1,11 @@
+"use client"
+
+import { useI18n } from "@/lib/i18n"
+
 function DateSeparator({ date }: { date: Date }) {
-  const formatted = date.toLocaleDateString(undefined, {
+  const { dateLocale } = useI18n()
+
+  const formatted = date.toLocaleDateString(dateLocale, {
     weekday: "long",
     year: "numeric",
     month: "long",

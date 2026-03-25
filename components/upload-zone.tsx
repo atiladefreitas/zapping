@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { extractZip } from "@/lib/extract-zip"
 import { parseWhatsApp } from "@/lib/parse-whatsapp"
 import { setChatData } from "@/lib/chat-store"
+import { useI18n } from "@/lib/i18n"
 
 type UploadState = "idle" | "dragging" | "extracting" | "parsing" | "error"
 
@@ -15,10 +16,11 @@ function UploadZone({ onComplete }: { onComplete: () => void }) {
   const [state, setState] = React.useState<UploadState>("idle")
   const [error, setError] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const { t } = useI18n()
 
   async function handleFile(file: File) {
     if (!file.name.toLowerCase().endsWith(".zip")) {
-      setError("Please upload a .zip file exported from WhatsApp.")
+      setError(t("upload.invalidFile"))
       setState("error")
       return
     }
@@ -33,14 +35,14 @@ function UploadZone({ onComplete }: { onComplete: () => void }) {
       const chatData = parseWhatsApp(chatText, mediaMap)
 
       if (chatData.messages.length === 0) {
-        throw new Error("No messages found in the chat file.")
+        throw new Error(t("upload.noMessages"))
       }
 
       setChatData(chatData)
       onComplete()
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to process file."
+        err instanceof Error ? err.message : t("upload.failedProcess")
       setError(message)
       setState("error")
     }
@@ -104,11 +106,11 @@ function UploadZone({ onComplete }: { onComplete: () => void }) {
             <div>
               <p className="font-medium">
                 {state === "extracting"
-                  ? "Extracting ZIP..."
-                  : "Parsing messages..."}
+                  ? t("upload.extracting")
+                  : t("upload.parsing")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                This may take a moment for large chats
+                {t("upload.largeChat")}
               </p>
             </div>
           </>
@@ -124,11 +126,11 @@ function UploadZone({ onComplete }: { onComplete: () => void }) {
             <div>
               <p className="font-medium">
                 {state === "dragging"
-                  ? "Drop your file here"
-                  : "Drop your WhatsApp export here"}
+                  ? t("upload.dropHere")
+                  : t("upload.dropExport")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                or click to browse. Accepts .zip files only
+                {t("upload.browseHint")}
               </p>
             </div>
           </>

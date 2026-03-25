@@ -3,6 +3,8 @@
 import * as React from "react"
 import { type Virtualizer } from "@tanstack/react-virtual"
 
+import { useI18n } from "@/lib/i18n"
+
 type RowItem =
   | { kind: "date"; date: Date; key: string }
   | { kind: "message"; message: { timestamp: Date }; key: string }
@@ -15,7 +17,7 @@ type MonthEntry = {
   rowIndex: number
 }
 
-function buildMonthIndex(rows: RowItem[]): MonthEntry[] {
+function buildMonthIndex(rows: RowItem[], dateLocale: string): MonthEntry[] {
   const months: MonthEntry[] = []
   let lastKey = ""
 
@@ -29,11 +31,11 @@ function buildMonthIndex(rows: RowItem[]): MonthEntry[] {
     if (key !== lastKey) {
       lastKey = key
       months.push({
-        label: date.toLocaleDateString(undefined, {
+        label: date.toLocaleDateString(dateLocale, {
           month: "long",
           year: "numeric",
         }),
-        shortLabel: date.toLocaleDateString(undefined, {
+        shortLabel: date.toLocaleDateString(dateLocale, {
           month: "short",
           year: "2-digit",
         }),
@@ -58,7 +60,11 @@ function TimelineScrubber({
   parentRef: React.RefObject<HTMLDivElement | null>
   visibleDate: Date | null
 }) {
-  const months = React.useMemo(() => buildMonthIndex(rows), [rows])
+  const { dateLocale } = useI18n()
+  const months = React.useMemo(
+    () => buildMonthIndex(rows, dateLocale),
+    [rows, dateLocale]
+  )
   const [hoveredMonth, setHoveredMonth] = React.useState<string | null>(null)
   const [isScrolling, setIsScrolling] = React.useState(false)
   const scrollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -73,7 +79,7 @@ function TimelineScrubber({
     : null
 
   const tooltipDate = visibleDate
-    ? visibleDate.toLocaleDateString(undefined, {
+    ? visibleDate.toLocaleDateString(dateLocale, {
         weekday: "short",
         month: "short",
         day: "numeric",

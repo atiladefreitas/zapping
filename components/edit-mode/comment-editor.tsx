@@ -25,10 +25,11 @@ import {
   setActiveDayKey,
   getComments,
 } from "@/lib/edit-mode-store"
+import { useI18n } from "@/lib/i18n"
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, dateLocale: string): string {
   const date = new Date(dateString)
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(dateLocale, {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -41,6 +42,8 @@ function EditorToolbar({
 }: {
   editor: ReturnType<typeof useEditor> | null
 }) {
+  const { t } = useI18n()
+
   if (!editor) return null
 
   return (
@@ -49,7 +52,7 @@ function EditorToolbar({
         size="sm"
         pressed={editor.isActive("bold")}
         onPressedChange={() => editor.chain().focus().toggleBold().run()}
-        aria-label="Bold"
+        aria-label={t("commentEditor.bold")}
       >
         <Bold className="size-3.5" />
       </Toggle>
@@ -57,7 +60,7 @@ function EditorToolbar({
         size="sm"
         pressed={editor.isActive("italic")}
         onPressedChange={() => editor.chain().focus().toggleItalic().run()}
-        aria-label="Italic"
+        aria-label={t("commentEditor.italic")}
       >
         <Italic className="size-3.5" />
       </Toggle>
@@ -65,7 +68,7 @@ function EditorToolbar({
         size="sm"
         pressed={editor.isActive("underline")}
         onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
-        aria-label="Underline"
+        aria-label={t("commentEditor.underline")}
       >
         <UnderlineIcon className="size-3.5" />
       </Toggle>
@@ -76,7 +79,7 @@ function EditorToolbar({
         size="sm"
         pressed={editor.isActive("bulletList")}
         onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
-        aria-label="Bullet list"
+        aria-label={t("commentEditor.bulletList")}
       >
         <List className="size-3.5" />
       </Toggle>
@@ -84,7 +87,7 @@ function EditorToolbar({
         size="sm"
         pressed={editor.isActive("orderedList")}
         onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-        aria-label="Ordered list"
+        aria-label={t("commentEditor.orderedList")}
       >
         <ListOrdered className="size-3.5" />
       </Toggle>
@@ -98,13 +101,13 @@ function EditorToolbar({
           if (editor.isActive("link")) {
             editor.chain().focus().unsetLink().run()
           } else {
-            const url = window.prompt("URL:")
+            const url = window.prompt(t("commentEditor.urlPrompt"))
             if (url) {
               editor.chain().focus().setLink({ href: url }).run()
             }
           }
         }}
-        aria-label="Link"
+        aria-label={t("commentEditor.link")}
       >
         <LinkIcon className="size-3.5" />
       </Toggle>
@@ -114,6 +117,7 @@ function EditorToolbar({
 
 function CommentEditor() {
   const editState = useEditMode()
+  const { t, dateLocale } = useI18n()
   const activeDayKey = editState.activeDayKey
   // Read comments directly (not via reactive hook) to avoid
   // re-creating the editor on every keystroke.
@@ -121,12 +125,16 @@ function CommentEditor() {
     ? (getComments().get(activeDayKey) ?? "")
     : ""
 
-  // Keep a ref to activeDayKey so the debounced callback always
-  // writes to the correct day without re-creating the editor.
+  // Refs for the debounced save callback — kept stable across renders
+  // so the tiptap onUpdate closure always writes to the correct day.
   const dayKeyRef = React.useRef(activeDayKey)
-  dayKeyRef.current = activeDayKey
-
   const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync the dayKey ref inside an effect (not during render) to satisfy
+  // React Compiler rules while still giving onUpdate the latest value.
+  React.useEffect(() => {
+    dayKeyRef.current = activeDayKey
+  }, [activeDayKey])
 
   // Cleanup debounce timer on unmount
   React.useEffect(() => {
@@ -166,8 +174,6 @@ function CommentEditor() {
       },
       onUpdate: ({ editor: ed }) => {
         // Debounce store writes so typing stays instant.
-        // The store only notifies comment-specific listeners anyway,
-        // but debouncing further reduces work (e.g. "Note" badge updates).
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
         saveTimerRef.current = setTimeout(() => {
           const key = dayKeyRef.current
@@ -180,32 +186,38 @@ function CommentEditor() {
     [activeDayKey]
   )
 
-  // Flush pending comment immediately when switching day, so
-  // the previous day's in-flight edits are not lost.
-  const prevDayRef = React.useRef(activeDayKey)
-  if (prevDayRef.current !== activeDayKey) {
-    if (saveTimerRef.current && prevDayRef.current) {
-      clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-      // Sync-flush: save whatever the editor currently holds for the *previous* day
-      if (editor) {
-        setDayComment(prevDayRef.current, editor.getHTML())
+  // Flush pending comment when switching to a different day so
+  // in-flight edits from the previous day are not lost.
+  // We read `activeDayKey` to trigger cleanup on change; the actual
+  // flush uses `dayKeyRef` which still holds the *previous* value
+  // at cleanup time.
+  React.useEffect(() => {
+    // Read activeDayKey so the linter sees it's used
+    const _currentKey = activeDayKey
+    void _currentKey
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
+      const key = dayKeyRef.current
+      if (key && editor) {
+        setDayComment(key, editor.getHTML())
       }
     }
-    prevDayRef.current = activeDayKey
-  }
+  }, [activeDayKey, editor])
 
   if (!activeDayKey) {
     return (
       <div className="flex h-full flex-col">
         <div className="border-b px-4 py-2">
           <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Notes
+            {t("commentEditor.notes")}
           </h3>
         </div>
         <div className="flex flex-1 items-center justify-center p-8">
           <p className="text-center text-xs text-muted-foreground">
-            Click &ldquo;Add note&rdquo; on a day block to write comments
+            {t("commentEditor.emptyState")}
           </p>
         </div>
       </div>
@@ -217,17 +229,17 @@ function CommentEditor() {
       <div className="flex items-center justify-between border-b px-4 py-2">
         <div>
           <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            Notes
+            {t("commentEditor.notes")}
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            {formatDate(activeDayKey)}
+            {formatDate(activeDayKey, dateLocale)}
           </p>
         </div>
         <Button
           variant="ghost"
           size="icon-xs"
           onClick={() => setActiveDayKey(null)}
-          title="Close editor"
+          title={t("commentEditor.closeEditor")}
         >
           <X className="size-3" />
         </Button>

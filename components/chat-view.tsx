@@ -13,6 +13,7 @@ import { DateSeparator } from "@/components/date-separator"
 import { MediaGallery } from "@/components/media-gallery"
 import { ParticipantAvatar } from "@/components/participant-avatar"
 import { TimelineScrubber } from "@/components/timeline-scrubber"
+import { useI18n } from "@/lib/i18n"
 import { type ChatData, type Message } from "@/types/chat"
 
 type RowItem =
@@ -69,6 +70,7 @@ function ChatView({ chatData }: { chatData: ChatData }) {
   const [search, setSearch] = React.useState("")
   const [showSearch, setShowSearch] = React.useState(false)
   const parentRef = React.useRef<HTMLDivElement>(null)
+  const { t, dateLocale } = useI18n()
 
   const showSenderNames = chatData.participants.length >= 2
 
@@ -154,7 +156,7 @@ function ChatView({ chatData }: { chatData: ChatData }) {
       : null
 
   const stickyDateLabel = visibleDate
-    ? visibleDate.toLocaleDateString(undefined, {
+    ? visibleDate.toLocaleDateString(dateLocale, {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -194,10 +196,13 @@ function ChatView({ chatData }: { chatData: ChatData }) {
             </h2>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MessageSquare className="size-3" />
-              <span>{chatData.messages.length.toLocaleString()} messages</span>
+              <span>
+                {chatData.messages.length.toLocaleString()} {t("chat.messages")}
+              </span>
               {chatData.mediaMap.size > 0 && (
                 <span>
-                  &middot; {chatData.mediaMap.size.toLocaleString()} media
+                  &middot; {chatData.mediaMap.size.toLocaleString()}{" "}
+                  {t("chat.media")}
                 </span>
               )}
             </div>
@@ -211,7 +216,7 @@ function ChatView({ chatData }: { chatData: ChatData }) {
           {showSearch ? (
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Search messages..."
+                placeholder={t("chat.searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-8 w-48"
@@ -219,7 +224,7 @@ function ChatView({ chatData }: { chatData: ChatData }) {
               />
               {search && (
                 <Badge variant="secondary" className="shrink-0">
-                  {filteredMessages.length.toLocaleString()} results
+                  {filteredMessages.length.toLocaleString()} {t("chat.results")}
                 </Badge>
               )}
               <Button

@@ -13,16 +13,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { useI18n } from "@/lib/i18n"
 import { type Message, type MessageType } from "@/types/chat"
+import { type TranslationKey } from "@/lib/i18n"
 
 type MediaTab = "images" | "videos" | "audio" | "documents"
 
-const TABS: { id: MediaTab; label: string; icon: React.ElementType }[] = [
-  { id: "images", label: "Images", icon: ImageIcon },
-  { id: "videos", label: "Videos", icon: Film },
-  { id: "audio", label: "Audio", icon: Mic },
-  { id: "documents", label: "Docs", icon: FileText },
+const TAB_DEFS: {
+  id: MediaTab
+  labelKey: TranslationKey
+  icon: React.ElementType
+}[] = [
+  { id: "images", labelKey: "mediaGallery.images", icon: ImageIcon },
+  { id: "videos", labelKey: "mediaGallery.videos", icon: Film },
+  { id: "audio", labelKey: "mediaGallery.audio", icon: Mic },
+  { id: "documents", labelKey: "mediaGallery.docs", icon: FileText },
 ]
+
+const EMPTY_STATE_KEYS: Record<MediaTab, TranslationKey> = {
+  images: "mediaGallery.noImages",
+  videos: "mediaGallery.noVideos",
+  audio: "mediaGallery.noAudio",
+  documents: "mediaGallery.noDocuments",
+}
 
 function matchesTab(type: MessageType, tab: MediaTab): boolean {
   switch (tab) {
@@ -37,8 +50,8 @@ function matchesTab(type: MessageType, tab: MediaTab): boolean {
   }
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString(undefined, {
+function formatDate(date: Date, dateLocale: string): string {
+  return date.toLocaleDateString(dateLocale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -48,6 +61,7 @@ function formatDate(date: Date): string {
 function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
   const [tab, setTab] = React.useState<MediaTab>("images")
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null)
+  const { t, dateLocale } = useI18n()
 
   const counts = React.useMemo(() => {
     const c = { images: 0, videos: 0, audio: 0, documents: 0 }
@@ -68,9 +82,9 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
   // Default to first non-empty tab
   React.useEffect(() => {
     if (counts.images > 0) return
-    for (const t of TABS) {
-      if (counts[t.id] > 0) {
-        setTab(t.id)
+    for (const td of TAB_DEFS) {
+      if (counts[td.id] > 0) {
+        setTab(td.id)
         return
       }
     }
@@ -86,28 +100,28 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
 
       <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Shared Media</DialogTitle>
+          <DialogTitle>{t("mediaGallery.title")}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
         <div className="flex gap-1 border-b pb-2">
-          {TABS.map((t) => {
-            const count = counts[t.id]
-            const Icon = t.icon
+          {TAB_DEFS.map((td) => {
+            const count = counts[td.id]
+            const Icon = td.icon
             return (
               <button
-                key={t.id}
+                key={td.id}
                 type="button"
-                onClick={() => setTab(t.id)}
+                onClick={() => setTab(td.id)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                  tab === t.id
+                  tab === td.id
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <Icon className="size-3.5" />
-                {t.label}
+                {t(td.labelKey)}
                 {count > 0 && (
                   <Badge
                     variant="secondary"
@@ -125,7 +139,7 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
         <div className="min-h-0 flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <p className="text-sm">No {tab} shared in this chat</p>
+              <p className="text-sm">{t(EMPTY_STATE_KEYS[tab])}</p>
             </div>
           ) : tab === "images" ? (
             <div className="grid grid-cols-3 gap-1.5">
@@ -165,7 +179,7 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
                   </video>
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                     <span className="truncate">{msg.sender}</span>
-                    <span>{formatDate(msg.timestamp)}</span>
+                    <span>{formatDate(msg.timestamp, dateLocale)}</span>
                   </div>
                 </div>
               ))}
@@ -182,10 +196,11 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium">
-                      {msg.mediaFilename ?? "Audio message"}
+                      {msg.mediaFilename ?? t("mediaGallery.audioMessage")}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {msg.sender} &middot; {formatDate(msg.timestamp)}
+                      {msg.sender} &middot;{" "}
+                      {formatDate(msg.timestamp, dateLocale)}
                     </p>
                   </div>
                   <audio
@@ -213,10 +228,11 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium">
-                      {msg.mediaFilename ?? "Document"}
+                      {msg.mediaFilename ?? t("mediaGallery.document")}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {msg.sender} &middot; {formatDate(msg.timestamp)}
+                      {msg.sender} &middot;{" "}
+                      {formatDate(msg.timestamp, dateLocale)}
                     </p>
                   </div>
                 </a>
@@ -240,7 +256,7 @@ function MediaGallery({ mediaMessages }: { mediaMessages: Message[] }) {
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={selectedImage}
-                alt="Full size preview"
+                alt={t("mediaGallery.fullSizePreview")}
                 className="mx-auto max-h-[85vh] rounded-lg object-contain"
               />
             )}

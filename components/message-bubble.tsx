@@ -3,13 +3,14 @@
 import { cn } from "@/lib/utils"
 import { MediaPreview } from "@/components/media-preview"
 import { ParticipantAvatar } from "@/components/participant-avatar"
+import { useI18n } from "@/lib/i18n"
 import { type Message, type Participant } from "@/types/chat"
 
 // Simple URL detection for text messages
 const URL_RE = /(https?:\/\/[^\s<]+)/g
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString(undefined, {
+function formatTime(date: Date, dateLocale: string): string {
+  return date.toLocaleTimeString(dateLocale, {
     hour: "2-digit",
     minute: "2-digit",
   })
@@ -60,6 +61,8 @@ function MessageBubble({
   showSender: boolean
   participant?: Participant
 }) {
+  const { t, dateLocale } = useI18n()
+
   if (message.type === "system") {
     return <SystemMessage message={message} />
   }
@@ -84,7 +87,7 @@ function MessageBubble({
             isOwn ? "rounded-br-sm bg-primary/10" : "rounded-bl-sm bg-muted"
           )}
         >
-          This message was deleted
+          {t("message.deleted")}
         </div>
       </div>
     )
@@ -124,10 +127,12 @@ function MessageBubble({
 
         <div className="mt-1 flex items-center justify-end gap-1">
           {message.isEdited && (
-            <span className="text-[10px] text-muted-foreground">edited</span>
+            <span className="text-[10px] text-muted-foreground">
+              {t("message.edited")}
+            </span>
           )}
           <time className="text-[10px] text-muted-foreground">
-            {formatTime(message.timestamp)}
+            {formatTime(message.timestamp, dateLocale)}
           </time>
         </div>
       </div>

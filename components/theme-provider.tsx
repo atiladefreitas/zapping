@@ -5,6 +5,7 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 import { Moon, Sun } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n"
 
 function ThemeProvider({
   children,
@@ -73,6 +74,7 @@ function ThemeHotkey() {
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
+  const { t } = useI18n()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -81,7 +83,7 @@ function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon-sm" aria-label="Toggle theme">
+      <Button variant="ghost" size="icon-sm" aria-label={t("theme.toggle")}>
         <Sun className="size-4" />
       </Button>
     )
@@ -91,7 +93,7 @@ function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon-sm"
-      aria-label="Toggle theme"
+      aria-label={t("theme.toggle")}
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
       {resolvedTheme === "dark" ? (

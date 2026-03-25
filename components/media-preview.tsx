@@ -6,6 +6,7 @@ import { FileText, Download, Play, Pause, Mic } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AudioWaveform } from "@/components/audio-waveform"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { useI18n } from "@/lib/i18n"
 import { type Message } from "@/types/chat"
 
 function formatDuration(seconds: number): string {
@@ -60,6 +61,7 @@ function AudioPlayer({ src }: { src: string }) {
   const [playing, setPlaying] = React.useState(false)
   const [duration, setDuration] = React.useState(0)
   const [currentTime, setCurrentTime] = React.useState(0)
+  const { t } = useI18n()
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
@@ -152,7 +154,7 @@ function AudioPlayer({ src }: { src: string }) {
             if (e.key === "ArrowLeft") audio.currentTime -= 5
           }}
           role="slider"
-          aria-label="Audio progress"
+          aria-label={t("mediaPreview.audioProgress")}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(progress)}
@@ -186,12 +188,13 @@ function AudioPlayer({ src }: { src: string }) {
 
 function MediaPreview({ message }: { message: Message }) {
   const [lightbox, setLightbox] = React.useState(false)
+  const { t } = useI18n()
 
   if (!message.mediaUrl) {
     return (
       <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
         <FileText className="size-4" />
-        <span>{message.mediaFilename ?? "Media unavailable"}</span>
+        <span>{message.mediaFilename ?? t("mediaPreview.unavailable")}</span>
       </div>
     )
   }
@@ -273,7 +276,7 @@ function MediaPreview({ message }: { message: Message }) {
         >
           <FileText className="size-4 shrink-0" />
           <span className="min-w-0 truncate">
-            {message.mediaFilename ?? "Document"}
+            {message.mediaFilename ?? t("mediaGallery.document")}
           </span>
           <Download className="ml-auto size-4 shrink-0" />
         </a>

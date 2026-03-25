@@ -1,5 +1,7 @@
 import JSZip from "jszip"
 
+import { getTranslation } from "@/lib/i18n"
+
 export type ExtractedChat = {
   chatText: string
   mediaMap: Map<string, string>
@@ -72,9 +74,7 @@ export async function extractZip(file: File): Promise<ExtractedChat> {
   }
 
   if (!chatText) {
-    throw new Error(
-      "No chat text file found in the ZIP. Expected a file like _chat.txt or WhatsApp Chat with *.txt"
-    )
+    throw new Error(getTranslation("extract.noChatFile"))
   }
 
   // Extract media files and create object URLs

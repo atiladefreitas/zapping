@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { getInitials } from "@/lib/participants"
 import { setParticipantAvatar } from "@/lib/chat-store"
+import { useI18n } from "@/lib/i18n"
 import { type Participant } from "@/types/chat"
 
 function ParticipantAvatar({
@@ -22,6 +23,7 @@ function ParticipantAvatar({
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null)
   const initials = getInitials(participant.name)
+  const { t } = useI18n()
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -77,7 +79,7 @@ function ParticipantAvatar({
               type="button"
               className="text-destructive-foreground absolute -top-0.5 -right-0.5 z-10 flex size-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold opacity-0 transition-opacity group-hover/participant-avatar:opacity-100"
               onClick={handleRemove}
-              title="Remove photo"
+              title={t("participant.removePhoto")}
             >
               x
             </button>

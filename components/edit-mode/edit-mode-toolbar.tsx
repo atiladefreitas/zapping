@@ -13,6 +13,7 @@ import {
   selectAllMessages,
   deselectAllMessages,
 } from "@/lib/edit-mode-store"
+import { useI18n } from "@/lib/i18n"
 import { type Message } from "@/types/chat"
 
 function EditModeToolbar({
@@ -23,6 +24,7 @@ function EditModeToolbar({
   onExportPdf: () => void
 }) {
   const editState = useEditMode()
+  const { t } = useI18n()
 
   const nonSystemMessages = React.useMemo(
     () => messages.filter((m) => m.type !== "system"),
@@ -38,7 +40,7 @@ function EditModeToolbar({
         className="gap-1.5"
       >
         <Pencil className="size-3" />
-        Edit Mode
+        {t("editMode.editMode")}
       </Button>
     )
   }
@@ -50,7 +52,7 @@ function EditModeToolbar({
   return (
     <div className="flex items-center gap-2">
       <Badge variant="secondary" className="gap-1">
-        {selectedCount} / {totalCount} selected
+        {selectedCount} / {totalCount} {t("editMode.selected")}
       </Badge>
 
       <Separator orientation="vertical" className="h-4" />
@@ -72,7 +74,7 @@ function EditModeToolbar({
         ) : (
           <CheckSquare className="size-3" />
         )}
-        {allSelected ? "Deselect all" : "Select all"}
+        {allSelected ? t("editMode.deselectAll") : t("editMode.selectAll")}
       </Button>
 
       <Button
@@ -83,7 +85,7 @@ function EditModeToolbar({
         className="gap-1.5"
       >
         <FileDown className="size-3" />
-        Export PDF
+        {t("editMode.exportPdf")}
       </Button>
 
       <Separator orientation="vertical" className="h-4" />
@@ -92,7 +94,7 @@ function EditModeToolbar({
         variant="ghost"
         size="icon-sm"
         onClick={exitEditMode}
-        title="Exit edit mode"
+        title={t("editMode.exitEditMode")}
       >
         <X className="size-3.5" />
       </Button>
